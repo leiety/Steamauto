@@ -98,28 +98,28 @@ DEFAULT_CONFIG_JSON = r"""
     // 出售通知配置(如不需要可直接删除)
     "sell_notification": {
       // 出售通知标题
-      "title": "成功出售{game}饰品: {item_name} * {sold_count}",
+      "title": "[{steam_username}]出售: {item_name}*{sold_count} {buff_price}RMB",
       // 出售通知内容
-      "body": "![good_icon]({good_icon})\n游戏: {game}\n饰品: {item_name}\n出售单价: {buff_price} RMB\nSteam单价(参考): {steam_price} USD\nSteam单价(参考): {steam_price_cny} RMB\n![buyer_avatar]({buyer_avatar})\n买家: {buyer_name}\n订单时间: {order_time}"
+      "body": "游戏: {game}\n出售单价: {buff_price} RMB\nSteam单价(参考): {steam_price} USD\nSteam单价(参考): {steam_price_cny} RMB\n买家: {buyer_name}\n订单时间: {order_time}"
     },
     // 出售保护通知配置(如不需要可直接删除)
     "protection_notification": {
       // 出售保护通知标题（如不需要可直接删除）
-      "title": "{game}饰品: {item_name} 未自动接受报价, 价格与市场最低价相差过大",
+      "title": "[{steam_username}]{game}饰品: {item_name} 未自动接受报价, 价格与市场最低价相差过大",
       // 出售保护通知内容（如不需要可直接删除）
       "body": "请自行至BUFF确认报价!"
     },
     // 报价与BUFF出售商品不匹配通知配置(如不需要可直接删除)
     "item_mismatch_notification": {
       // 报价与BUFF出售商品不匹配通知标题
-      "title": "BUFF出售饰品与Steam报价饰品不匹配",
+      "title": "[{steam_username}]BUFF出售饰品与Steam报价饰品不匹配",
       // 报价与BUFF出售商品不匹配通知内容
       "body": "请自行至BUFF确认报价!(Offer: {offer_id})"
     },
     // BUFF Cookies失效通知配置
     "buff_cookie_expired_notification": {
       // BUFF Cookies失效通知标题（如不需要可直接删除）
-      "title": "BUFF Cookie已过期, 请重新登录",
+      "title": "[{steam_username}] BUFF Cookie已过期, 请重新登录",
       // BUFF Cookies失效通知内容（如不需要可直接删除）
       "body": "BUFF Cookie已过期, 请重新登录"
     },
@@ -184,14 +184,14 @@ DEFAULT_CONFIG_JSON = r"""
     // 上架通知配置(如不需要可直接删除)
     "on_sale_notification": {
         // 上架通知标题
-        "title": "游戏 {game} 成功上架 {sold_count} 件饰品",
+        "title": "[{steam_username}]上架 {sold_count} 件饰品",
         // 上架通知内容
         "body": "上架详情:\n{item_list}"
     },
     // 出现验证码通知配置(如不需要可直接删除)
     "captcha_notification": {
         // 出现验证码通知标题
-        "title": "上架饰品时出现验证码",
+        "title": "[{steam_username}]上架饰品时出现验证码",
         // 出现验证码通知内容
         "body": "使用session={session}并使用浏览器打开以下链接并完成验证:\n{captcha_url}"
     },

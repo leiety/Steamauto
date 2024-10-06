@@ -79,9 +79,9 @@ class SteamYue:
 
     def exec(self):
         wait_time = random.randint(5, 50)
-        self.logger.info('------------------------------------------------------------')
-        self.logger.info(f"[启动插件] 余额查询，{wait_time}秒后正式启动")
-        self.logger.info('------------------------------------------------------------')
+        self.logger = PluginLogger('启动插件')
+        self.logger.info(f"余额查询，{wait_time}秒后正式启动")
+        self.logger = PluginLogger('SteamYue')
         time.sleep(wait_time)
 
         self.list = self.load_list()

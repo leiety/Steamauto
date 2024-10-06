@@ -304,7 +304,7 @@ class BuffAutoOnSale:
                                 apprise_obj.add(server)
                             apprise_obj.notify(
                                 title=self.config["buff_auto_on_sale"]["on_sale_notification"]["title"].format(
-                                    game=game, sold_count=len(assets)),
+                                    game=game, sold_count=len(assets), steam_username=self.steam_client.username),
                                 body=self.config["buff_auto_on_sale"]["on_sale_notification"]["body"].format(
                                     game=game, sold_count=len(assets), item_list=item_list)
                             )
@@ -351,7 +351,7 @@ class BuffAutoOnSale:
                     apprise_obj.add(server)
                 apprise_obj.notify(
                     title=self.config["buff_auto_on_sale"]["on_sale_notification"]["title"].format(
-                        game=game, sold_count=len(assets)),
+                        game=game, sold_count=len(assets), steam_username=self.steam_client.username),
                     body=self.config["buff_auto_on_sale"]["on_sale_notification"]["body"].format(
                         game=game, sold_count=len(assets), item_list=item_list)
                 )
@@ -473,7 +473,8 @@ class BuffAutoOnSale:
                     for server in self.config["buff_auto_on_sale"]["servers"]:
                         apprise_obj.add(server)
                     apprise_obj.notify(
-                        title=self.config["buff_auto_on_sale"]["captcha_notification"]["title"],
+                        title=self.config["buff_auto_on_sale"]["captcha_notification"]["title"].format(
+                            steam_username=self.steam_client.username),
                         body=self.config["buff_auto_on_sale"]["captcha_notification"]["body"].format(
                             captcha_url=captcha_url, session=session)
                     )
@@ -484,8 +485,10 @@ class BuffAutoOnSale:
                 return -1
 
     def exec(self):
-        self.logger.info("[BuffAutoOnSale] BUFF自动上架插件已启动, 休眠30秒, 与自动接收报价插件错开运行时间")
-        # time.sleep(30)
+        wait_time = random.randint(5, 50)
+        self.logger.info(f"[启动插件] BUFF自动上架，{wait_time}秒后正式启动")
+        time.sleep(wait_time)
+
         try:
             self.logger.info("[BuffAutoOnSale] 正在准备登录至BUFF...")
             with open(BUFF_COOKIES_FILE_PATH, "r", encoding=get_encoding(BUFF_COOKIES_FILE_PATH)) as f:
