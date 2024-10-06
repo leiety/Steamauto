@@ -80,7 +80,7 @@ class SteamYue:
     def exec(self):
         wait_time = random.randint(5, 50)
         self.logger.info('------------------------------------------------------------')
-        self.logger.info(f" [启动插件] 余额查询插件，{wait_time}秒后启动")
+        self.logger.info(f"[启动插件] 余额查询，{wait_time}秒后正式启动")
         self.logger.info('------------------------------------------------------------')
         time.sleep(wait_time)
 
@@ -108,15 +108,14 @@ class SteamYue:
                     self.list.append({"time":f'[{current_time.strftime("%H:%M")}]', 'amount': amount, 'kucun':f'{kucun}'})
                     title = f'余 {self.steam_client.username} - {amount} - {kucun}'
                     msg = ''
-                    print(f'{title}')
+                    self.logger.info(f'{title}')
                     for li in self.list:
                         msg += f"{li['time']} - {li['amount']} - {li['kucun']}\n"
-                    print(msg)
+                    self.logger.info(msg)
                     self.send_msg.notify(
                         title = title,
                         body = msg,
                     )
-                    print('--------------------------------------------------')
 
             except Exception as e:
                 handle_caught_exception(e, "SteamAutoAcceptOffer")
