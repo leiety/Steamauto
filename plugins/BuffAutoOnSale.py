@@ -166,7 +166,7 @@ class BuffAutoOnSale:
         for item in items:
             has_requested_refresh = False
             refresh_count = 0
-            self.logger.info("[BuffAutoOnSale] 正在解析 " + item["market_hash_name"])
+            self.logger.info("[BuffAutoOnSale] 正在解析 " + item["name"])
             min_paint_wear = 0
             max_paint_wear = 1.0
             paint_wear = -1
@@ -298,7 +298,7 @@ class BuffAutoOnSale:
                     success = self.supply_item_to_buy_order(item, highest_buy_order, game, app_id)
                     if success:
                         if "on_sale_notification" in self.config["buff_auto_on_sale"]:
-                            item_list = item["market_hash_name"] + " : " + highest_buy_order["price"] + "\n"
+                            item_list = item["name"] + " : " + highest_buy_order["price"] + "\n"
                             apprise_obj = apprise.Apprise(asset=self.asset)
                             for server in self.config["buff_auto_on_sale"]["servers"]:
                                 apprise_obj.add(server)
@@ -313,7 +313,7 @@ class BuffAutoOnSale:
                 sell_price = sell_price - 0.01
                 if sell_price < 0.02:
                     sell_price = 0.02
-                self.logger.info("[BuffAutoOnSale] 商品 " + item["market_hash_name"] +
+                self.logger.info("[BuffAutoOnSale] 商品 " + item["name"] +
                                  " 将使用价格 " + str(sell_price) + " 进行上架")
                 assets.append(
                     {
@@ -322,6 +322,7 @@ class BuffAutoOnSale:
                         "classid": item["classid"],
                         "instanceid": item["instanceid"],
                         "contextid": item["contextid"],
+                        "name": item["name"],
                         "market_hash_name": item["market_hash_name"],
                         "price": sell_price,
                         "income": sell_price,
@@ -345,7 +346,7 @@ class BuffAutoOnSale:
             if "on_sale_notification" in self.config["buff_auto_on_sale"]:
                 item_list = ""
                 for asset in assets:
-                    item_list += asset["market_hash_name"] + " : " + str(asset["price"]) + "\n"
+                    item_list += asset["name"] + " : " + str(asset["price"]) + "\n"
                 apprise_obj = apprise.Apprise(asset=self.asset)
                 for server in self.config["buff_auto_on_sale"]["servers"]:
                     apprise_obj.add(server)
@@ -568,6 +569,7 @@ class BuffAutoOnSale:
                             )
                             items_to_sell = []
                             for item in items:
+                                item["asset_info"]["name"] = item["name"]
                                 item["asset_info"]["market_hash_name"] = item["market_hash_name"]
                                 items_to_sell.append(item["asset_info"])
                             # 5个一组上架
