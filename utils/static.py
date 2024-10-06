@@ -75,6 +75,14 @@ DEFAULT_CONFIG_JSON = r"""
   // 填写为true后，程序在出现错误后就会直接停止运行。如果你不知道你在做什么，请不要将它设置为true
   "no_pause": false,
 
+  // steam余额查询
+  "steam_yue": {
+    "enable": true,
+    //（轮询间隔），单位为分
+    "jiange_bai": 30,
+    "jiange_hei": 60,
+  },
+  
   // BUFF 自动发货插件配置
   "buff_auto_accept_offer": {
     // 是否启用BUFF自动发货报价功能

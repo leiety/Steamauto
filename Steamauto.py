@@ -28,6 +28,7 @@ from plugins.UUAutoSell import UUAutoSellItem
 from steampy.client import SteamClient
 from steampy.exceptions import ApiException
 from utils.tools import jobHandler
+from plugins.SteamYue import SteamYue
 
 try:
     from steampy.utils import ping_proxy  # type: ignore

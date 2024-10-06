@@ -18,3 +18,4 @@ steamauto.spec
 .vscode
 launch.json
 plugins/External*
+.venv/*
