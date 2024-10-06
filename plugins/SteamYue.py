@@ -24,7 +24,7 @@ class SteamYue:
         
         self.send_msg = apprise.Apprise()
         for server in self.config["buff_auto_accept_offer"]["servers"]:
-            self.send_msg.add(server)# 加载历史数据
+            self.send_msg.add(server)
         self.list = []
 
 

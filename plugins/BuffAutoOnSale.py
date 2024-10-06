@@ -71,6 +71,9 @@ class BuffAutoOnSale:
         self.session = requests.session()
         self.lowest_price_cache = {}
         self.unfinish_supply_order_list = [] # 等待buff发起报价, 之后进行确认报价的订单, [{order_id, create_time}]
+        self.send_msg = apprise.Apprise()
+        for server in self.config["buff_auto_accept_offer"]["servers"]:
+            self.send_msg.add(server)
 
     def init(self) -> bool:
         if get_valid_session_for_buff(self.steam_client, self.logger) == "":
@@ -566,6 +569,10 @@ class BuffAutoOnSale:
                             self.logger.info(
                                 "[BuffAutoOnSale] 检查到 " + game["game"] + " 库存有 " + str(
                                     len(items)) + " 件可出售商品, 正在上架..."
+                            )
+                            self.send_msg.notify(
+                                title = f'[{self.steam_client.username}]库存有{str(len(items))}件可出售商品',
+                                body = '正在上架...\n正在上架...\n正在上架...',
                             )
                             items_to_sell = []
                             for item in items:
