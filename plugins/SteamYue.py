@@ -106,7 +106,7 @@ class SteamYue:
                     if len(self.list) >= 15:
                         self.list.pop(0)
                     self.list.append({"time":f'[{current_time.strftime("%H:%M")}]', 'amount': amount, 'kucun':f'{kucun}'})
-                    title = f'余 {self.steam_client.username} - {amount} - {kucun}'
+                    title = f'[{self.steam_client.username}] 余额 - {amount} - {kucun}'
                     msg = ''
                     self.logger.info(f'{title}')
                     for li in self.list:
