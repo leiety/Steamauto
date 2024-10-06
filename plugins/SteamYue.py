@@ -5,6 +5,7 @@ from datetime import datetime
 
 import json5
 import json
+import random
 
 import apprise
 from apprise import AppriseAsset
@@ -26,8 +27,10 @@ class SteamYue:
             self.send_msg.add(server)# 加载历史数据
         self.list = []
 
+
     def init(self):
         return False
+
 
     def load_list(self):
         """从 JSON 文件加载列表"""
@@ -41,6 +44,7 @@ class SteamYue:
                 return []
         return []
     
+
     def load_list(self):
         """从 JSON 文件加载列表"""
         list_path = os.path.join(SESSION_FOLDER, f"{self.steam_client.username.lower()}_list.json")
@@ -64,6 +68,7 @@ class SteamYue:
                 return []
         return []
 
+
     def save_list(self):
         """保存列表为 JSON 文件"""
         if len(self.list) > 0:
@@ -71,15 +76,15 @@ class SteamYue:
             with open(list_path, "w", encoding="utf-8") as f:
                 json.dump(self.list, f, ensure_ascii=False, indent=4)
         
-    def exec(self):
-        self.logger.info("余额查询插件已启动, 休眠30秒, 与其它插件错开运行时间")
-        self.list = self.load_list()
-        
-        self.send_msg.notify(
-            title = 'title',
-            body = 'msg',
-        )
 
+    def exec(self):
+        wait_time = random.randint(5, 50)
+        self.logger.info('------------------------------------------------------------')
+        self.logger.info(f" [启动插件] 余额查询插件，{wait_time}秒后启动")
+        self.logger.info('------------------------------------------------------------')
+        time.sleep(wait_time)
+
+        self.list = self.load_list()
         while True:
             try:
                 with self.steam_client_mutex:
