@@ -435,7 +435,7 @@ def exit_app(signal_, frame):
 
 
 if __name__ == "__main__":
-    os.system('mode con: cols=100 lines=40')
+    os.system('mode con: cols=100')
     sys.excepthook = handle_global_exception
     signal.signal(signal.SIGINT, exit_app)
     if not os.path.exists(DEV_FILE_FOLDER):
