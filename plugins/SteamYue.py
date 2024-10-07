@@ -101,7 +101,10 @@ class SteamYue:
                 with self.steam_client_mutex:
                     trade_summary = self.steam_client.get_my_inventory(game=GameOptions.CS) 
                     kucun = len(trade_summary)
-                    amount = self.steam_client.get_wallet_balance(False) 
+                    try:
+                        amount = self.steam_client.get_wallet_balance(False) 
+                    except Exception as e:
+                        amount = 'err'
                     current_time = datetime.now()
                     if len(self.list) >= 15:
                         self.list.pop(0)
