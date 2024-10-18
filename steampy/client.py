@@ -96,6 +96,7 @@ class SteamClient:
             access_token = response.json()['response']['access_token']
             steam_login_secure = str(steam_id) + '%7C%7C' + str(access_token)
             self._session.cookies.set('steamLoginSecure', steam_login_secure, domain='steamcommunity.com')
+            self._session.cookies.set('steamLoginSecure', steam_login_secure, domain='store.steampowered.com')
         except Exception as e:
             pass
 
@@ -505,6 +506,10 @@ class SteamClient:
         url = SteamUrl.STORE_URL + '/account/history/'
         response = self._session.get(url)
         response_soup = bs4.BeautifulSoup(response.text, "html.parser")
+        if response_soup.title.string == 'Sign In':
+            self.is_session_alive()
+            response = self._session.get(url)
+            response_soup = bs4.BeautifulSoup(response.text, "html.parser")
         balance = response_soup.find(id='header_wallet_balance').string
         if convert_to_decimal:
             return parse_price(balance)
