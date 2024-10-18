@@ -124,6 +124,9 @@ class SteamYue:
                 handle_caught_exception(e, "SteamAutoAcceptOffer")
                 self.logger.error("发生未知错误！稍后再试...")
                 
+            # 保存列表
+            self.save_list()
+
             # 获取当前时间
             current_time = datetime.now()
             # 获取当前小时
