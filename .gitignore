@@ -15,5 +15,5 @@ dist/*
 *bak
 .vscode
 launch.json
-plugins/External*
+plugins/*External*
 .venv/*
