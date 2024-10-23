@@ -363,6 +363,14 @@ class BuffAutoOnSale:
         else:
             self.logger.error(response_json)
             self.logger.error("[BuffAutoOnSale] 上架BUFF商品失败, 请检查buff_cookies.txt或稍后再试! ")
+            # 新设备需要登录steam验证
+            if response_json['code'] == 'Sms Logged In Needs Verification':
+                self.logger.error("[BuffAutoOnSale] 新设备需要登录steam验证, 请打开以下链接, 登录steam")
+                self.logger.error("[BuffAutoOnSale] " + response_json['confirm_entry']['entry']['url'])
+                self.send_msg.notify(
+                    title = f'[{self.steam_client.username}] 新设备登录steam验证',
+                    body = '新设备需要登录steam验证，请打开以下链接, 登录steam\n' + response_json['confirm_entry']['entry']['url']
+                )
             return {}
 
     def get_highest_buy_order(self, goods_id, game="csgo", app_id=730, paint_wear=-1, require_auto_accept=True,
