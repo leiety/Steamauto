@@ -166,7 +166,19 @@ class BuffAutoOnSale:
                 min_price = self.config["buff_auto_on_sale"]["buy_order"]["min_price"]
         url = "https://buff.163.com/api/market/sell_order/create/manual_plus"
         assets = []
+
+        # 检测白名单时间
+        sleep_interval = int(self.config["buff_auto_on_sale"]["interval"])
+        white_list_time = []
+        if 'whitelist_time' in self.config["buff_auto_on_sale"]:
+            white_list_time = self.config["buff_auto_on_sale"]["whitelist_time"]
         for item in items:
+            now = datetime.datetime.now()
+            if len(white_list_time) != 0 and now.hour not in white_list_time:
+                self.logger.info("[BuffAutoOnSale] 现在时间不在白名单时间内, 休眠" + str(sleep_interval) + "秒#2")
+                time.sleep(sleep_interval)
+                continue
+            
             has_requested_refresh = False
             refresh_count = 0
             self.logger.info("[BuffAutoOnSale] 正在解析 " + item["name"])
