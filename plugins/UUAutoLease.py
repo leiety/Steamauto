@@ -14,9 +14,9 @@ from uuyoupinapi import models
 
 
 class UUAutoLeaseItem:
-    def __init__(self, config):
+    def __init__(self, config, uu_account=None):
         self.logger = PluginLogger("UUAutoLeaseItem")
-        self.uuyoupin = None
+        self.uuyoupin = uu_account
         self.config = config
         self.timeSleep = 10
         self.inventory_list = []
@@ -33,7 +33,7 @@ class UUAutoLeaseItem:
             return True
         return False
 
-    def get_lease_price(self, template_id, min_price=0, cnt=15):
+    def get_lease_price(self, template_id, min_price=0, max_price=20000, cnt=15):
 
         if template_id in self.lease_price_cache:
             if datetime.datetime.now() - self.lease_price_cache[template_id]["cache_time"] <= datetime.timedelta(minutes=20):
@@ -50,8 +50,8 @@ class UUAutoLeaseItem:
                     "LongLeaseUnitPrice": long_lease_unit_price,
                     "LeaseDeposit": lease_deposit,
                 }
-
-        rsp_list = self.uuyoupin.get_market_lease_price(template_id, min_price=min_price, cnt=cnt)
+        max_price = 20000 if max_price == 0 else max_price
+        rsp_list = self.uuyoupin.get_market_lease_price(template_id, min_price=min_price, max_price=max_price, cnt=cnt)
         if len(rsp_list) > 0:
             rsp_cnt = len(rsp_list)
             commodity_name = rsp_list[0].CommodityName
@@ -78,19 +78,28 @@ class UUAutoLeaseItem:
 
             lease_deposit = max(float(np.mean(lease_deposit_list)) * 0.98, float(min(lease_deposit_list)))
 
-            self.logger.info(
-                f"物品 {commodity_name}，"
-                f"短租价格：{lease_unit_price:.2f}，长租价格：{long_lease_unit_price:.2f}，押金：{lease_deposit:.2f}"
-            )
             self.logger.info(f"短租参考价格：{lease_unit_price_list}，长租参考价格：{long_lease_unit_price_list}")
         else:
             lease_unit_price = long_lease_unit_price = lease_deposit = 0
             commodity_name = ""
 
         lease_unit_price = round(lease_unit_price, 2)
-        long_lease_unit_price = round(long_lease_unit_price, 2)
+        long_lease_unit_price = min(round(long_lease_unit_price, 2), lease_unit_price)
         lease_deposit = round(lease_deposit, 2)
 
+        if self.config['uu_auto_lease_item']['enable_fix_lease_ratio'] and min_price > 0:
+            ratio = self.config['uu_auto_lease_item']['fix_lease_ratio']
+            lease_unit_price = max(lease_unit_price, min_price * ratio)
+            long_lease_unit_price = max(long_lease_unit_price, lease_unit_price * 0.98)
+
+            self.logger.info(
+                f"物品 {commodity_name}，启用比例定价，市场价 {min_price}，租金比例 {ratio}"
+            )
+
+        self.logger.info(
+            f"物品 {commodity_name}，"
+            f"短租价格：{lease_unit_price:.2f}，长租价格：{long_lease_unit_price:.2f}，押金：{lease_deposit:.2f}"
+        )
         if lease_unit_price != 0:
             self.lease_price_cache[template_id] = {
                 "commodity_name": commodity_name,
@@ -114,10 +123,8 @@ class UUAutoLeaseItem:
                 lease_item_list = []
                 self.uuyoupin.send_device_info()
                 self.logger.info("正在获取悠悠有品库存...")
-                self.inventory_list = self.uuyoupin.get_inventory()
-                self.operate_sleep()
 
-                self.inventory_list = self.uuyoupin.get_inventory()
+                self.inventory_list = self.uuyoupin.get_inventory(refresh=True)
 
                 for i, item in enumerate(self.inventory_list):
                     if item["AssetInfo"] is None:
@@ -135,7 +142,7 @@ class UUAutoLeaseItem:
                         continue
                     self.operate_sleep()
 
-                    price_rsp = self.get_lease_price(template_id, min_price=price)
+                    price_rsp = self.get_lease_price(template_id, min_price=price, max_price=price*2)
                     if price_rsp["LeaseUnitPrice"] == 0:
                         continue
                     
@@ -176,7 +183,7 @@ class UUAutoLeaseItem:
                 try:
                     self.uuyoupin.get_user_nickname()
                 except KeyError as e:
-                    handle_caught_exception(e, "UUAutoLeaseItem")
+                    handle_caught_exception(e, "UUAutoLeaseItem", known=True)
                     self.logger.error("检测到悠悠有品登录已经失效,请重新登录。")
                     self.logger.error("由于登录失败，插件将自动退出。")
                     exit_code.set(1)
@@ -193,11 +200,12 @@ class UUAutoLeaseItem:
 
                 template_id = item.templateid
                 short_name = item.short_name
+                price = item.price
 
                 if any(s != "" and is_subsequence(s, short_name) for s in self.config["uu_auto_lease_item"]["filter_name"]):
                     continue
 
-                price_rsp = self.get_lease_price(template_id)
+                price_rsp = self.get_lease_price(template_id, min_price=price, max_price=price*2)
                 if price_rsp["LeaseUnitPrice"] == 0:
                     continue
 
@@ -229,7 +237,7 @@ class UUAutoLeaseItem:
             try:
                 self.uuyoupin.get_user_nickname()
             except KeyError as e:
-                handle_caught_exception(e, "UUAutoLeaseItem-AutoChangePrice")
+                handle_caught_exception(e, "UUAutoLeaseItem-AutoChangePrice", known=True)
                 self.logger.error("检测到悠悠有品登录已经失效,请重新登录")
                 self.logger.error("由于登录失败，插件将自动退出")
                 exit_code.set(1)

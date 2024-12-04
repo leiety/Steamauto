@@ -17,11 +17,11 @@
 > 杜绝收费、安全稳定
 
 > 广告:
-> 【ECOSteam】复制整段打开ECOSteam加入「Elsa可达鸭」PN：01J0TGJPQZF7G9FK0P6QJWQGRJ「欢迎加入Elsa可达鸭的团队或点击链接https://share.ecosteam.cn/share/01J0TGJPQZF7G9FK0P6QJWQGRJ「欢迎加入Elsa可达鸭的团队
+> 【ECOSteam】[https://share.ecosteam.cn/share/01J154Z3NMTXQ5B2ZT3TQ5NSZA](https://share.ecosteam.cn/share/01J154Z3NMTXQ5B2ZT3TQ5NSZA)
 > ECOSteam 新CSGO皮肤交易平台
 > 交易0手续费 提现1% 满1万余额需要提现可私聊我免费领取提现券
 > 货多的还可以联系群管申请交易补贴!(2%)
-> 可租可售 上架就有利息拿 最高可拿15%利息 加入我的团队拿额外2%利息(总金额要求已经达到 只需要人数)
+> 可租可售 求购还有1%补贴
 > 本软件完美支持ECOSteam, 请放心使用
 
 **使用前请仔细阅读本文档！**
@@ -49,8 +49,11 @@
 
 - 自动发货出售商品
 - 出租/出售自动上架
+  - 出租支持:
+    - [x] 自动设置出租价格
+    - [x] 按出售现价固定比例设置出租价格
   - 出售支持:
-    - [ ] 按区间定价
+    - [ ] 按磨损区间定价
     - [X] 按止盈率定价（需要设定购入价）
 
 #### 在 [ECOSteam交易平台](https://www.ecosteam.cn/) 上:

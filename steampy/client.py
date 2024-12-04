@@ -1,31 +1,28 @@
 import copy
 import decimal
-
-import bs4
+import json
+import time
 import urllib.parse as urlparse
 from typing import List, Union
 
-import json
+import bs4
 import requests
+
 from steampy import guard
 from steampy.chat import SteamChat
 from steampy.confirmation import ConfirmationExecutor
-from steampy.exceptions import SevenDaysHoldException, LoginRequired, ApiException, InvalidResponse, EmptyResponse
-from steampy.login import LoginExecutor, InvalidCredentials
+from steampy.exceptions import (ApiException, EmptyResponse, InvalidResponse,
+                                LoginRequired, SevenDaysHoldException)
+from steampy.login import InvalidCredentials, LoginExecutor
 from steampy.market import SteamMarket
-from steampy.models import Asset, TradeOfferState, SteamUrl, GameOptions
-from steampy.utils import (
-    text_between,
-    texts_between,
-    merge_items_with_descriptions_from_inventory,
-    steam_id_to_account_id,
-    merge_items_with_descriptions_from_offers,
-    get_description_key,
-    merge_items_with_descriptions_from_offer,
-    account_id_to_steam_id,
-    get_key_value_from_url,
-    parse_price,
-)
+from steampy.models import Asset, GameOptions, SteamUrl, TradeOfferState
+from steampy.utils import (account_id_to_steam_id, get_description_key,
+                           get_key_value_from_url,
+                           merge_items_with_descriptions_from_inventory,
+                           merge_items_with_descriptions_from_offer,
+                           merge_items_with_descriptions_from_offers,
+                           parse_price, steam_id_to_account_id, text_between,
+                           texts_between)
 
 
 def login_required(func):
@@ -162,7 +159,7 @@ class SteamClient:
     def get_partner_inventory(self, partner_steam_id: str, game: GameOptions, merge: bool = True, count: int = 5000) -> dict:
         url = '/'.join([SteamUrl.COMMUNITY_URL, 'inventory', str(partner_steam_id), game.app_id, game.context_id])
         params = {'l': 'english', 'count': count}
-        response_dict = self._session.get(url, params=params, timeout=10).json()
+        response_dict = self._session.get(url, cookies={"steamDidLoginRefresh": str(int(time.time()))}, params=params, timeout=10).json()
         if 'success' not in response_dict:
             raise InvalidResponse()
         if response_dict['success'] != 1:
