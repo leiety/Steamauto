@@ -2,6 +2,7 @@ import copy
 import datetime
 import json
 import os
+import pickle
 import time
 from threading import Thread
 from typing import Dict, List, Union
@@ -14,7 +15,7 @@ from steampy.models import GameOptions
 from utils.buff_helper import get_valid_session_for_buff
 from utils.logger import LogFilter, PluginLogger, handle_caught_exception
 from utils.models import Asset, LeaseAsset, ModelEncoder
-from utils.static import ECOSTEAM_RSAKEY_FILE
+from utils.static import ECOSTEAM_RSAKEY_FILE, SESSION_FOLDER
 from utils.tools import exit_code, get_encoding
 from utils.uu_helper import get_valid_token_for_uu
 from uuyoupinapi import UUAccount
@@ -366,9 +367,6 @@ class ECOsteamPlugin:
         tomorrow = tomorrow.strftime("%Y-%m-%d")
         last_month = last_month.strftime("%Y-%m-%d")
         wait_deliver_orders = self.client.getFullSellerOrderList(last_month, tomorrow, DetailsState=8, SteamId=self.steam_id)
-        # for order in wait_deliver_orders:
-        #     if order['OrderStateCode'] == 2:
-        #         wait_deliver_orders.remove(order)
         accept_offer_logger.info(f"检测到{len(wait_deliver_orders)}个待发货订单！")
         if len(wait_deliver_orders) > 0:
             for order in wait_deliver_orders:
@@ -377,8 +375,12 @@ class ECOsteamPlugin:
                     continue
                 accept_offer_logger.debug(f'正在获取订单号{order["OrderNum"]}的详情！')
                 detail = self.client.GetSellerOrderDetail(OrderNum=order["OrderNum"]).json()["ResultData"]
+                time.sleep(0.3)
                 tradeOfferId = detail["TradeOfferId"]
                 goodsName = detail["GoodsName"]
+                if not tradeOfferId:
+                    accept_offer_logger.warning(f"商品{goodsName}无法获取到交易报价号(可能由于ECO服务器正在发送报价)，暂时跳过处理")
+                    continue
                 if tradeOfferId not in self.ignored_offer:
                     accept_offer_logger.info(f"正在发货商品{goodsName}，报价号{tradeOfferId}...")
                     try:
@@ -388,6 +390,15 @@ class ECOsteamPlugin:
                         accept_offer_logger.info(f"已接受报价号{tradeOfferId}！")
                     except Exception as e:
                         handle_caught_exception(e, "ECOsteam.cn", known=True)
+                        with self.steam_client_mutex:
+                            if not self.steam_client.is_session_alive():
+                                accept_offer_logger.warning("Steam会话已过期, 正在重新登录...")
+                                self.steam_client.relogin()
+                                accept_offer_logger.info("Steam会话已更新")
+                                steam_session_path = os.path.join(SESSION_FOLDER, self.steam_client.username.lower() + ".pkl")
+                                with open(steam_session_path, "wb") as f:
+                                    pickle.dump(self.steam_client, f)
+                                accept_offer_logger.info("Steam会话已保存，请等待下次自动发货")
                         accept_offer_logger.error("Steam异常, 暂时无法接受报价, 请稍后再试! ")
                 else:
                     accept_offer_logger.info(f"已经自动忽略报价号{tradeOfferId}，商品名{goodsName}，因为它已经被程序处理过！")
