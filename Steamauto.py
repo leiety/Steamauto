@@ -29,6 +29,7 @@ from plugins.UUAutoSell import UUAutoSellItem
 from steampy.client import SteamClient
 from steampy.exceptions import ApiException
 from utils.tools import jobHandler
+from plugins.SteamYue import SteamYue
 
 try:
     from steampy.utils import ping_proxy  # type: ignore
@@ -457,6 +458,7 @@ def exit_app(signal_, frame):
 
 
 if __name__ == "__main__":
+    os.system('mode con: cols=100')
     sys.excepthook = handle_global_exception
     signal.signal(signal.SIGINT, exit_app)
     if not os.path.exists(DEV_FILE_FOLDER):

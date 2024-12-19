@@ -71,6 +71,9 @@ class BuffAutoOnSale:
         self.session = requests.session()
         self.lowest_price_cache = {}
         self.unfinish_supply_order_list = [] # 等待buff发起报价, 之后进行确认报价的订单, [{order_id, create_time}]
+        self.send_msg = apprise.Apprise()
+        for server in self.config["buff_auto_accept_offer"]["servers"]:
+            self.send_msg.add(server)
 
     def init(self) -> bool:
         if get_valid_session_for_buff(self.steam_client, self.logger) == "":
@@ -163,10 +166,22 @@ class BuffAutoOnSale:
                 min_price = self.config["buff_auto_on_sale"]["buy_order"]["min_price"]
         url = "https://buff.163.com/api/market/sell_order/create/manual_plus"
         assets = []
+
+        # 检测白名单时间
+        sleep_interval = int(self.config["buff_auto_on_sale"]["interval"])
+        white_list_time = []
+        if 'whitelist_time' in self.config["buff_auto_on_sale"]:
+            white_list_time = self.config["buff_auto_on_sale"]["whitelist_time"]
         for item in items:
+            now = datetime.datetime.now()
+            if len(white_list_time) != 0 and now.hour not in white_list_time:
+                self.logger.info("[BuffAutoOnSale] 现在时间不在白名单时间内, 休眠" + str(sleep_interval) + "秒#2")
+                time.sleep(sleep_interval)
+                continue
+            
             has_requested_refresh = False
             refresh_count = 0
-            self.logger.info("[BuffAutoOnSale] 正在解析 " + item["market_hash_name"])
+            self.logger.info("[BuffAutoOnSale] 正在解析 " + item["name"])
             min_paint_wear = 0
             max_paint_wear = 1.0
             paint_wear = -1
@@ -298,13 +313,13 @@ class BuffAutoOnSale:
                     success = self.supply_item_to_buy_order(item, highest_buy_order, game, app_id)
                     if success:
                         if "on_sale_notification" in self.config["buff_auto_on_sale"]:
-                            item_list = item["market_hash_name"] + " : " + highest_buy_order["price"] + "\n"
+                            item_list = item["name"] + " : " + highest_buy_order["price"] + "\n"
                             apprise_obj = apprise.Apprise(asset=self.asset)
                             for server in self.config["buff_auto_on_sale"]["servers"]:
                                 apprise_obj.add(server)
                             apprise_obj.notify(
                                 title=self.config["buff_auto_on_sale"]["on_sale_notification"]["title"].format(
-                                    game=game, sold_count=len(assets)),
+                                    game=game, sold_count=len(assets), steam_username=self.steam_client.username),
                                 body=self.config["buff_auto_on_sale"]["on_sale_notification"]["body"].format(
                                     game=game, sold_count=len(assets), item_list=item_list)
                             )
@@ -313,7 +328,7 @@ class BuffAutoOnSale:
                 sell_price = sell_price - 0.01
                 if sell_price < 0.02:
                     sell_price = 0.02
-                self.logger.info("[BuffAutoOnSale] 商品 " + item["market_hash_name"] +
+                self.logger.info("[BuffAutoOnSale] 商品 " + item["name"] +
                                  " 将使用价格 " + str(sell_price) + " 进行上架")
                 assets.append(
                     {
@@ -322,6 +337,7 @@ class BuffAutoOnSale:
                         "classid": item["classid"],
                         "instanceid": item["instanceid"],
                         "contextid": item["contextid"],
+                        "name": item["name"],
                         "market_hash_name": item["market_hash_name"],
                         "price": sell_price,
                         "income": sell_price,
@@ -345,13 +361,13 @@ class BuffAutoOnSale:
             if "on_sale_notification" in self.config["buff_auto_on_sale"]:
                 item_list = ""
                 for asset in assets:
-                    item_list += asset["market_hash_name"] + " : " + str(asset["price"]) + "\n"
+                    item_list += asset["name"] + " : " + str(asset["price"]) + "\n"
                 apprise_obj = apprise.Apprise(asset=self.asset)
                 for server in self.config["buff_auto_on_sale"]["servers"]:
                     apprise_obj.add(server)
                 apprise_obj.notify(
                     title=self.config["buff_auto_on_sale"]["on_sale_notification"]["title"].format(
-                        game=game, sold_count=len(assets)),
+                        game=game, sold_count=len(assets), steam_username=self.steam_client.username),
                     body=self.config["buff_auto_on_sale"]["on_sale_notification"]["body"].format(
                         game=game, sold_count=len(assets), item_list=item_list)
                 )
@@ -359,6 +375,14 @@ class BuffAutoOnSale:
         else:
             self.logger.error(response_json)
             self.logger.error("[BuffAutoOnSale] 上架BUFF商品失败, 请检查buff_cookies.txt或稍后再试! ")
+            # 新设备需要登录steam验证
+            if response_json['code'] == 'Sms Logged In Needs Verification':
+                self.logger.error("[BuffAutoOnSale] 新设备需要登录steam验证, 请打开以下链接, 登录steam")
+                self.logger.error("[BuffAutoOnSale] " + response_json['confirm_entry']['entry']['url'])
+                self.send_msg.notify(
+                    title = f'[{self.steam_client.username}] 新设备登录steam验证',
+                    body = '新设备需要登录steam验证，请打开以下链接, 登录steam\n' + response_json['confirm_entry']['entry']['url']
+                )
             return {}
 
     def get_highest_buy_order(self, goods_id, game="csgo", app_id=730, paint_wear=-1, require_auto_accept=True,
@@ -473,7 +497,8 @@ class BuffAutoOnSale:
                     for server in self.config["buff_auto_on_sale"]["servers"]:
                         apprise_obj.add(server)
                     apprise_obj.notify(
-                        title=self.config["buff_auto_on_sale"]["captcha_notification"]["title"],
+                        title=self.config["buff_auto_on_sale"]["captcha_notification"]["title"].format(
+                            steam_username=self.steam_client.username),
                         body=self.config["buff_auto_on_sale"]["captcha_notification"]["body"].format(
                             captcha_url=captcha_url, session=session)
                     )
@@ -484,8 +509,10 @@ class BuffAutoOnSale:
                 return -1
 
     def exec(self):
-        self.logger.info("[BuffAutoOnSale] BUFF自动上架插件已启动, 休眠30秒, 与自动接收报价插件错开运行时间")
-        # time.sleep(30)
+        wait_time = random.randint(5, 50)
+        self.logger.info(f"[启动插件] BUFF自动上架，{wait_time}秒后正式启动")
+        time.sleep(wait_time)
+
         try:
             self.logger.info("[BuffAutoOnSale] 正在准备登录至BUFF...")
             with open(BUFF_COOKIES_FILE_PATH, "r", encoding=get_encoding(BUFF_COOKIES_FILE_PATH)) as f:
@@ -563,8 +590,13 @@ class BuffAutoOnSale:
                                 "[BuffAutoOnSale] 检查到 " + game["game"] + " 库存有 " + str(
                                     len(items)) + " 件可出售商品, 正在上架..."
                             )
+                            self.send_msg.notify(
+                                title = f'[{self.steam_client.username}]库存有{str(len(items))}件可出售商品',
+                                body = '正在上架...\n正在上架...\n正在上架...',
+                            )
                             items_to_sell = []
                             for item in items:
+                                item["asset_info"]["name"] = item["name"]
                                 item["asset_info"]["market_hash_name"] = item["market_hash_name"]
                                 items_to_sell.append(item["asset_info"])
                             # 5个一组上架

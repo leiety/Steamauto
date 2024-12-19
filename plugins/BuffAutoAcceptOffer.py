@@ -157,6 +157,7 @@ class BuffAutoAcceptOffer:
                 buff_price=buff_price,
                 sold_count=len(trade["items_to_trade"]),
                 offer_id=trade["tradeofferid"],
+                steam_username=self.steam_client.username,
             )
         return text
 
@@ -233,7 +234,10 @@ class BuffAutoAcceptOffer:
         return True
 
     def exec(self):
-        self.logger.info("BUFF自动接受报价插件已启动.请稍候...")
+        self.logger = PluginLogger('启动插件')
+        self.logger.info(f"BUFF自动接受报价")
+        self.logger = PluginLogger("BuffAutoAcceptOffer")
+
         self.logger.info("正在准备登录至BUFF...")
         with open(BUFF_COOKIES_FILE_PATH, "r", encoding=get_encoding(BUFF_COOKIES_FILE_PATH)) as f:
             self.buff_headers["Cookie"] = f.read().replace("\n", "").split(";")[0]
@@ -272,9 +276,8 @@ class BuffAutoAcceptOffer:
                             for server in self.config["buff_auto_accept_offer"]["servers"]:
                                 apprise_obj.add(server)
                             apprise_obj.notify(
-                                title=self.config["buff_auto_accept_offer"]["buff_cookie_expired_notification"][
-                                    "title"
-                                ],
+                                title=self.config["buff_auto_accept_offer"]["buff_cookie_expired_notification"]["title"].format(
+                                    steam_username=self.steam_client.username),
                                 body=self.config["buff_auto_accept_offer"]["buff_cookie_expired_notification"]["body"],
                             )
                         return
